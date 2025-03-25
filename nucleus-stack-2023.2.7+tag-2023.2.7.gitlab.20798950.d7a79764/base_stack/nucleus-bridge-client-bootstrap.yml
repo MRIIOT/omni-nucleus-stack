@@ -1,0 +1,30 @@
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+#
+# This Compose file brings up your Nucleus Ingress Router. 
+# Use it with the same `.env` file as you used to bring up your Nucleus stack
+
+services:
+  nucleus-bridge-client-bootstrap:
+    image: ${REGISTRY}/nucleus-ingress-router:${INGRESS_ROUTER_VERSION}
+#    restart_policy:
+#      condition: none
+    tty: true
+
+    environment:
+      ACCEPT_EULA: ${ACCEPT_EULA}
+
+      OMNI_BRIDGE_DO_INIT: 1
+      OMNI_BRIDGE_LOCAL_WIREGUARD_PRIVATE_KEY_FILE: /omni/secrets/${BRIDGE_CLIENT_PRIVATE_KEY}
+      OMNI_BRIDGE_LOCAL_WIREGUARD_ADDRESS: ${BRIDGE_CLIENT_PEER_IP_ADDRESS}
+
+    volumes:
+      - ${BRIDGE_KEYS_DIR}:/omni/secrets
+
+networks: 
+  default: 
+    ipam:
+      config: 
+        - subnet: "${CONTAINER_SUBNET}"

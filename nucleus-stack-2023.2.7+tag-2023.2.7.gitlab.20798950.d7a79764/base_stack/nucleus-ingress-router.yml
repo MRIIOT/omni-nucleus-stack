@@ -1,0 +1,86 @@
+################################################################################
+################################################################################
+################################################################################
+#
+# This Compose file brings up your Nucleus Ingress Router. 
+# Use it with the same `.env` file as you used to bring up your Nucleus stack
+
+
+services:
+  nucleus-ingress-router:
+    image: ${REGISTRY}/nucleus-ingress-router:${INGRESS_ROUTER_VERSION}
+    restart: always
+    tty: true
+    cap_add: ['NET_ADMIN']
+
+    environment:
+      ACCEPT_EULA: ${ACCEPT_EULA}
+
+      OMNI_TLS_ENABLE: 1
+      OMNI_TLS_CERT: /omni/secrets/tls/cert.crt
+      OMNI_TLS_KEY: /omni/secrets/tls/cert.key
+
+      OMNI_RTR_CANONICAL_NAME: ${SSL_INGRESS_HOST}
+      OMNI_RTR_TARGET: ${SERVER_IP_OR_HOST}
+
+      OMNI_NGINX_RESOLVER: ${SSL_INGRESS_RESOLVER}
+      OMNI_NGINX_LOGS_ERROR: 1
+      OMNI_NGINX_LOGS_ACCESS: 1
+
+      OMNI_RTR_PORTS_API: ${API_PORT_2}
+      OMNI_RTR_PORTS_LFT: ${LFT_PORT}
+      OMNI_RTR_PORTS_SERVICE_API: ${SERVICE_API_AUTHENTICATED_PORT}
+      OMNI_RTR_PORTS_DISCOVERY: ${DISCOVERY_PORT}
+      OMNI_RTR_PORTS_AUTH: ${AUTH_PORT}
+      OMNI_RTR_PORTS_AUTH_API: ${AUTH_API_PORT}
+      OMNI_RTR_PORTS_AUTH_FORM: ${AUTH_LOGIN_FORM_PORT}
+      OMNI_RTR_PORTS_TAGS: ${TAGGING_PORT}
+      OMNI_RTR_PORTS_SEARCH: ${SEARCH_PORT}
+      OMNI_RTR_PORTS_NAV: ${WEB_PORT}
+
+      ## Bridge
+      OMNI_BRIDGE_ENABLE: ${BRIDGE_ENABLED}
+
+      OMNI_BRIDGE_LOCAL_WIREGUARD_PRIVATE_KEY_FILE: /omni/secrets/bridge.peer.private.key
+      OMNI_BRIDGE_LOCAL_WIREGUARD_ADDRESS: ${BRIDGE_CLIENT_PEER_IP_ADDRESS}
+
+      OMNI_BRIDGE_PEER_MAP_FILE: /omni/secrets/bridge.map
+
+    secrets:
+      - source: tls_cert
+        target: /omni/secrets/tls/cert.crt
+      - source: tls_cert_key
+        target: /omni/secrets/tls/cert.key
+
+      - source: bridge_map
+        target: /omni/secrets/bridge.map
+      - source: bridge_local_peer_private_key
+        target: /omni/secrets/bridge.peer.private.key
+
+    ports:
+      - published: ${SSL_INGRESS_PORT}
+        target: 443
+
+      - published: 80
+        target: 80
+
+secrets:
+  tls_cert:
+    file: ${SSL_CERT}
+  tls_cert_key: 
+    file: ${SSL_CERT_KEY}
+
+  bridge_map:
+    file: ${BRIDGE_KEYS_DIR}/${BRIDGE_MAP}
+  bridge_local_peer_private_key:
+    file: ${BRIDGE_KEYS_DIR}/${BRIDGE_CLIENT_PRIVATE_KEY}
+
+
+
+networks: 
+  default: 
+    ipam:
+      config: 
+        - subnet: "${CONTAINER_SUBNET}"
+
+
